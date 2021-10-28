@@ -9,7 +9,7 @@ def main():
 
   # Permit limited configuration via command-line args
   debug = False                         # Debug YAML to console defaults to off: enable with --debug
-  root_path = 'configurations/'         # Root dir is 'configurations': modify with --root="mydir"
+  root_path = 'conf2yaml/configurations/'         # Root dir is 'configurations': modify with --root="mydir"
   domain = 'ocls.info'            # Default domain is 'nwid.bris.ac.uk': modify with --domain="mydomain"
   if (len(sys.argv) > 1):
     for arg in sys.argv:
@@ -24,7 +24,7 @@ def main():
         if domain_value != '':
           domain = domain_value.replace('"', '')
   
-  subdirs = walk(root_path).next()[1]   # obtain all subdirectories
+  subdirs = []   # obtain all subdirectories
   subdirs.append('')                    # add root directory
 
   # Parse all files in all subdirectories
@@ -34,12 +34,12 @@ def main():
       if filename != '.gitignore':                                              # Do not parse .gitignores
         input = CiscoConfParse(root_path + subdir + '/' + filename)             # Get our CiscoConfParse-formatted input
         output_yaml = convert_to_yaml(input)                                    # Parse input config into output YAML
-        output_path = 'yaml/' + root_path + subdir
-        print('Outputting ' + output_path + splitext(filename)[0] + '.' + domain + '.yml YAML')
+        output_path = 'conf2yaml/yaml/' + root_path + subdir
+        print('Outputting ' + output_path + filename + '.' + domain + '.yml YAML')
         write_output_yaml_to_file(output_yaml, output_path, filename, domain)   # Write our YAML to disk
         if (debug):                                                             # If debug mode specified output YAML to console
           print(output_path + splitext(filename)[0] + '.' + domain + '.yml YAML Output:')
-          print output_yaml
+          print(output_yaml)
 
 
 # The workhorse function that reads the Cisco config and returns our output config object
@@ -136,6 +136,25 @@ def convert_to_yaml(input_config):
           if guard_root:
             interface_dict['spanning_tree']['guard_root'] = True
 
+      # service-policy
+      service_policy = interface.re_search_children(r'service-policy')
+      if service_policy:
+        #Create service-policy dict if it does not yet exist
+        if not 'service_policy' in interface_dict:
+          interface_dict['service_policy'] = {}
+
+        for line in service_policy:
+
+          # input
+          spinput = line.re_match(r'^ service-policy input (.*)$')
+          if spinput:
+            interface_dict['service_policy']['input'] = spinput
+
+          # output
+          spoutput = line.re_match(r'^ service-policy output (.*)$')
+          if spoutput:
+            interface_dict['service_policy']['output'] = spoutput
+
       # ip
       ip = interface.re_search_children(r'^ ip ')
       if ip:
@@ -217,7 +236,7 @@ def convert_to_yaml(input_config):
         for line in misc:
 
           # description
-          interface_description = line.re_match(r'^ description (\S+)$')
+          interface_description = line.re_match(r'^ description (.*)$')
           if interface_description:
             interface_dict['description'] = interface_description
 
@@ -330,7 +349,7 @@ def convert_to_yaml(input_config):
       output_config['vtp_mode'] = vtp_mode.group(1)
 
   # vlans
-  vlans = input_config.find_objects('^vlan [0-9]+')
+  vlans = input_config.find_objects('^vlan [0-9].*')
   if vlans:
     # Create vlans dict if it does not yet exist
     if not 'vlans' in output_config:
@@ -349,6 +368,11 @@ def convert_to_yaml(input_config):
       if vlan_name:
         name = vlan_name[0].re_match(r' name (\S+)')
         vlan_dict['name'] = name
+
+      # vlan list
+      vlan_list = re.match('^vlan ([0-9],.*)$', vlan.text)
+      if vlan_list:
+        vlan_dict['list'] = vlan_list.group(1)
 
       # Append the completed vlan dict
       output_config['vlans'].append(vlan_dict)
@@ -373,7 +397,7 @@ def write_output_yaml_to_file(output_yaml, output_path, filename, domain):
     makedirs(output_path)
 
   # Write foo.yml to the subdir in yaml/root_path that corresponds to where we got the input file
-  with open(output_path + splitext(filename)[0] + '.' + domain + '.yml', 'w') as outfile:
+  with open(output_path + filename + '.' + domain + '.yml', 'w') as outfile:
     outfile.write(output_yaml)
 
 if __name__ == '__main__':
