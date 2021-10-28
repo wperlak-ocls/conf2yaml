@@ -101,7 +101,7 @@ def convert_to_yaml(input_config):
 
           # nonegotiate
           nonegotiate = line.re_search(r'^ switchport nonegotiate$')
-          if nonegotiate
+          if nonegotiate:
             interface_dict['switchport']['nonegotiate'] = True
 
           # switchport trunk
