@@ -84,6 +84,11 @@ def convert_to_yaml(input_config):
           if access_vlan:
             interface_dict['switchport']['access_vlan'] = access_vlan
 
+          # access vlan
+          voice_vlan = line.re_match(r' switchport voice vlan (\S+)')
+          if voice_vlan:
+            interface_dict['switchport']['voice_vlan'] = voice_vlan
+
           # switchport mode
           switchport_mode = line.re_match(r'^ switchport mode (\S+)$')
           if switchport_mode:
@@ -93,6 +98,11 @@ def convert_to_yaml(input_config):
           port_sec = line.re_search(r'^ switchport port-security$')
           if port_sec:
             interface_dict['switchport']['port_security'] = True
+
+          # nonegotiate
+          nonegotiate = line.re_search(r'^ switchport nonegotiate$')
+          if nonegotiate
+            interface_dict['switchport']['nonegotiate'] = True
 
           # switchport trunk
           switchport_trunk = line.re_search(r'^ switchport trunk.*$')
