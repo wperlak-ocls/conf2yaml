@@ -94,10 +94,28 @@ def convert_to_yaml(input_config):
           if switchport_mode:
             interface_dict['switchport']['mode'] = switchport_mode
 
-          # port-security
-          port_sec = line.re_search(r'^ switchport port-security$')
+          # # port-security
+          # port_sec = line.re_search(r'^ switchport port-security$')
+          # if port_sec:
+          #   interface_dict['switchport']['port_security'] = True
+            
+          # port-security dict
+          port_sec = interface.re_search_children(r'switchport port-security')
           if port_sec:
-            interface_dict['switchport']['port_security'] = True
+            if not 'port_security' in interface_dict:
+              interface_dict['switchport']['port_security'] = {}
+
+            for line in port_sec:
+
+              # enabled
+              port_sec_bool = line.re_search(r'^ switchport port-security$')
+              if port_sec_bool:
+                interface_dict['switchport']['port_security']['enabled'] = True
+              
+              # maximum
+              port_sec_max = line.re_match(r'^ switchport port-security maximum (\S+)$')
+              if port_sec_max:
+                interface_dict['switchport']['port_security']['maximum'] = port_sec_max
 
           # nonegotiate
           nonegotiate = line.re_search(r'^ switchport nonegotiate$')
@@ -145,6 +163,11 @@ def convert_to_yaml(input_config):
           guard_root = line.re_search(r'^ spanning-tree guard root$')
           if guard_root:
             interface_dict['spanning_tree']['guard_root'] = True
+
+          # bpduguard
+          bpduguard = line.re_search(r'^ spanning-tree bpduguard enable')
+          if bpduguard:
+            interface_dict['spanning_tree']['bpduguard'] = True
 
       # service-policy
       service_policy = interface.re_search_children(r'service-policy')
@@ -249,6 +272,11 @@ def convert_to_yaml(input_config):
           interface_description = line.re_match(r'^ description (.*)$')
           if interface_description:
             interface_dict['description'] = interface_description
+
+          # auto qos trust
+          auto_qos = line.re_search(r'^ auto qos trust.*$')
+          if auto_qos:
+            interface_dict['auto_qos_trust'] = True
 
           # power inline police
           power_inline_police = line.re_search(r'^ power inline police$')
