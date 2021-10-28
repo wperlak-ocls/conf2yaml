@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-
+#!/usr/local/bin/python
 from ciscoconfparse import CiscoConfParse
 from os import walk, makedirs, listdir
 from os.path import isfile, join, splitext, exists
@@ -11,7 +10,7 @@ def main():
   # Permit limited configuration via command-line args
   debug = False                         # Debug YAML to console defaults to off: enable with --debug
   root_path = 'configurations/'         # Root dir is 'configurations': modify with --root="mydir"
-  domain = 'nwid.bris.ac.uk'            # Default domain is 'nwid.bris.ac.uk': modify with --domain="mydomain"
+  domain = 'ocls.info'            # Default domain is 'nwid.bris.ac.uk': modify with --domain="mydomain"
   if (len(sys.argv) > 1):
     for arg in sys.argv:
       if arg == '--debug':
